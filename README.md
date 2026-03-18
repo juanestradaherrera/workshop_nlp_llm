@@ -9,7 +9,7 @@
 | **Universidad** | EAFIT — Período 2026-1 |
 | **Integrantes** | Ana Patricia Montes Pimienta · Karen Melissa Gómez Montoya · Juan Esteban Estrada Herrera |
 | **API utilizada** | Groq (`llama-3.3-70b-versatile`) |
-| **Puntaje total** | 100 puntos |
+
 
 ---
 
@@ -254,5 +254,3 @@ __pycache__/
 - [x] `.gitignore` con `secrets.toml` excluido
 
 ---
-
-> *«Los modelos de lenguaje no comprenden; generan. Entender esa diferencia es el primer paso para usarlos con sabiduría.»*
