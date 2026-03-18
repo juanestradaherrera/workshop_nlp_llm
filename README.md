@@ -1,4 +1,4 @@
-# 🧠 NLP & LLMs Avanzado — EAFIT 2026-1
+#  NLP & LLMs Avanzado — EAFIT 2026-1
 
 **Parcial — NLP y LLMs Avanzado: Sintonización de Parámetros, Métricas de Similitud y Evaluación de Modelos de Lenguaje**
 
@@ -13,7 +13,7 @@
 
 ---
 
-## 🗂️ Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 nlp_llms_parcial/
@@ -21,13 +21,13 @@ nlp_llms_parcial/
 ├── requirements.txt          # Dependencias del proyecto
 ├── .gitignore                # Excluye secrets.toml y archivos sensibles
 ├── .streamlit/
-│   └── secrets.toml          # ⚠️ API Key — NO subir al repositorio
+│   └── secrets.toml          #  API Key — NO subir al repositorio
 └── README.md
 ```
 
 ---
 
-## 🚀 Instalación y Ejecución
+##  Instalación y Ejecución
 
 ```bash
 # 1. Clonar el repositorio
@@ -48,13 +48,13 @@ TOML
 streamlit run app.py
 ```
 
-> ⚠️ **Seguridad:** El archivo `secrets.toml` está incluido en `.gitignore`. Nunca exponga su API Key en el repositorio.
+>  **Seguridad:** El archivo `secrets.toml` está incluido en `.gitignore`. Nunca exponga su API Key en el repositorio.
 
 ---
 
-## 📋 Descripción de las Partes
+##  Descripción de las Partes
 
-### 📝 Parte 01 — Evaluación Conceptual (Quiz Teórico) 
+###  Parte 01 — Evaluación Conceptual (Quiz Teórico) 
 
 Respuestas técnicas a 5 preguntas conceptuales sobre NLP y LLMs:
 
@@ -68,7 +68,7 @@ Respuestas técnicas a 5 preguntas conceptuales sobre NLP y LLMs:
 
 ---
 
-### ⚗️ Parte 02 — Laboratorio de Parámetros 
+###  Parte 02 — Laboratorio de Parámetros 
 
 Pestaña interactiva para experimentar con los hiperparámetros de generación de texto.
 
@@ -205,7 +205,7 @@ indícalo amablemente y redirige la conversación.
 
 ---
 
-## 🔒 Seguridad
+##  Seguridad
 
 - La API Key **nunca** se escribe en código plano ni se sube al repositorio
 - Se usa `.streamlit/secrets.toml` (local) o `st.secrets` (Streamlit Cloud)
@@ -221,7 +221,7 @@ __pycache__/
 
 ---
 
-## 📦 Librerías y Dependencias
+##  Librerías y Dependencias
 
 | Categoría | Librería / Paquete | Uso |
 |-----------|-------------------|-----|
@@ -237,7 +237,7 @@ __pycache__/
 
 ---
 
-## 📋 Checklist de Entrega
+##  Checklist de Entrega
 
 - [x] `app.py` ejecutable con `streamlit run app.py` sin errores
 - [x] 4 pestañas implementadas (Quiz, Laboratorio, Métricas, Agente)
