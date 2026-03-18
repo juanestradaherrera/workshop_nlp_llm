@@ -315,116 +315,11 @@ def estimate_cost(prompt_tokens: int, completion_tokens: int) -> float:
 # ─────────────────────────────────────────────
 # PESTAÑAS PRINCIPALES
 # ─────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📚 Quiz Teórico",
+tab2, tab3, tab4 = st.tabs([
     "⚗️ Laboratorio de Parámetros",
     "📊 Métricas de Similitud",
     "🤖 Agente Conversacional",
 ])
-
-
-# ══════════════════════════════════════════════
-# PARTE 01 – QUIZ TEÓRICO
-# ══════════════════════════════════════════════
-with tab1:
-    st.markdown('<div class="main-title">PARTE 01 · Quiz Teórico (25 pts)</div>', unsafe_allow_html=True)
-    st.caption("Respuestas técnicas precisas · 5 pts por pregunta")
-
-    questions = [
-        {
-            "num": "01",
-            "pts": 5,
-            "q": "Diferencia entre similitud coseno y distancia euclidiana en embeddings",
-            "a": """
-**Similitud coseno** mide el ángulo entre dos vectores, ignorando su magnitud. Su valor va de -1 a 1 (o 0 a 1 con embeddings no negativos). Captura **orientación semántica**: dos textos con las mismas palabras repetidas muchas veces tendrán alta similitud coseno aunque sus vectores difieran en norma.
-
-**Distancia euclidiana** mide la distancia geométrica directa (norma L2 de la diferencia). Es sensible a la magnitud; vectores de normas muy distintas pueden dar distancias altas aunque apunten en la misma dirección.
-
-**¿Cuándo preferir cada una?**
-- **Coseno**: búsqueda semántica, recuperación de información, clustering de documentos (longitudes variables). Es el estándar en NLP porque los embeddings de textos cortos y largos sobre el mismo tema deberían ser *similares*, no distantes por longitud.
-- **Euclidiana**: cuando la magnitud importa (ej. comparar intensidad de sentimientos, modelos de atención donde la distancia espacial tiene significado geométrico real, como en algunos enfoques de few-shot learning).
-""",
-        },
-        {
-            "num": "02",
-            "pts": 5,
-            "q": "Token probability mass: temperatura, top-p y top-k en la distribución Softmax",
-            "a": """
-En cada paso de decodificación, el LLM produce un vector de logits sobre el vocabulario (≈ 32K–128K tokens). La función **Softmax** convierte esos logits en una distribución de probabilidad, donde la masa total es 1.
-
-**Temperatura (T)**: divide los logits antes de Softmax: `softmax(logits / T)`.
-- T < 1 → distribución más "peaked" (concentrada en el token más probable) → respuestas deterministas.
-- T > 1 → distribución más plana (masa distribuida más uniformemente) → mayor aleatoriedad y creatividad.
-- T = 0 → greedy decoding (siempre el token máximo).
-
-**Top-k**: retiene solo los *k* tokens de mayor probabilidad y redistribuye la masa entre ellos, descartando la cola larga del vocabulario. Controla el tamaño del vocabulario efectivo en cada paso.
-
-**Top-p (nucleus sampling)**: selecciona el menor conjunto de tokens cuya probabilidad acumulada supera *p*. Es dinámico: con distribuciones muy concentradas selecciona pocos tokens; con distribuciones planas selecciona más, adaptándose al contexto.
-
-Los tres actúan como **filtros de la masa de probabilidad** antes del muestreo, permitiendo controlar el trade-off creatividad ↔ fidelidad.
-""",
-        },
-        {
-            "num": "03",
-            "pts": 5,
-            "q": "BLEU, ROUGE-L y BERTScore — por qué BERTScore captura semántica",
-            "a": """
-**BLEU** (Bilingual Evaluation Understudy): mide la precisión de n-gramas de la hipótesis que aparecen en la referencia, con penalización por brevedad. Es rápido y determinista, pero **léxico-dependiente**: no reconoce sinónimos ni paráfrasis.
-
-**ROUGE-L** (Recall-Oriented Understudy for Gisting Evaluation – Longest Common Subsequence): calcula la subsecuencia común más larga entre referencia e hipótesis, capturando coherencia estructural y orden. Mejor que BLEU para resúmenes, pero sigue siendo superficial.
-
-**BERTScore**: genera embeddings contextuales con BERT para cada token de ambos textos y calcula la similitud coseno token-a-token, tomando el máximo para cada token de referencia (recall) y de hipótesis (precision), luego promediando (F1).
-
-**¿Por qué BERTScore captura semántica que BLEU no?** Porque opera en el **espacio continuo de representaciones contextuales**: "auto" y "coche" tendrán alta similitud coseno en el espacio BERT aunque sean palabras distintas. BLEU compara cadenas de caracteres, por lo que dos textos semánticamente equivalentes pero con vocabulario diferente obtienen BLEU ≈ 0, mientras que BERTScore retorna valores altos.
-""",
-        },
-        {
-            "num": "04",
-            "pts": 5,
-            "q": "Fine-tuning supervisado (SFT) vs LoRA — ventaja en parámetros entrenables",
-            "a": """
-**Fine-tuning supervisado (SFT)** actualiza **todos** los parámetros del modelo preentrenado con un dataset etiquetado para la tarea objetivo. Para un LLaMA-3 70B esto implica entrenar ≈ 70 mil millones de parámetros, requiriendo decenas de GPUs de alta memoria y semanas de cómputo.
-
-**LoRA** (Low-Rank Adaptation): *congela* los pesos originales del modelo y añade matrices de rango bajo descomponibles `ΔW = A × B` (donde `A ∈ R^{d×r}` y `B ∈ R^{r×k}`, con `r ≪ d, k`) a las capas de atención (Q, V típicamente). Solo se entrenan estas matrices adicionales.
-
-**Ventaja en parámetros entrenables**: LoRA reduce los parámetros entrenables en **órdenes de magnitud**. Con rango r=16 sobre LLaMA 70B, se entrenan ~20–40M parámetros (< 0.1% del total) en vez de 70B. Esto permite:
-- Entrenamiento en una sola GPU (A100 80GB con cuantización).
-- Menor riesgo de *catastrophic forgetting*.
-- Múltiples adaptadores LoRA intercambiables sobre el mismo modelo base.
-- QLoRA combina cuantización 4-bit + LoRA para aún mayor eficiencia.
-""",
-        },
-        {
-            "num": "05",
-            "pts": 5,
-            "q": "LLM-as-a-Judge: ventajas frente a evaluación humana y sesgos conocidos",
-            "a": """
-**LLM-as-a-Judge** consiste en usar un LLM potente (ej. GPT-4, Claude Opus) para evaluar la calidad de las respuestas generadas por otro modelo, asignando puntuaciones o comparaciones (pairwise).
-
-**Ventajas frente a la evaluación humana:**
-- **Escalabilidad**: evalúa miles de ejemplos en minutos a bajo costo.
-- **Reproducibilidad**: sin variabilidad intra-evaluador (un humano cansado da respuestas distintas).
-- **Disponibilidad 24/7** sin coordinación logística.
-- **Consistencia** en el criterio de evaluación si el prompt es fijo.
-- Captura **semántica y coherencia** mejor que métricas léxicas (BLEU/ROUGE).
-
-**Sesgos conocidos:**
-- **Position bias**: el LLM tiende a favorecer la respuesta que aparece primero en prompts de comparación pairwise, independientemente de calidad.
-- **Verbosity bias**: prefiere respuestas más largas aunque no sean más correctas; confunde extensión con profundidad.
-- **Self-enhancement bias**: los modelos tienden a favorecer respuestas similares a las que ellos mismos generarían.
-- **Sycophancy**: si el prompt sugiere una preferencia, el juez tiende a confirmarla.
-- **Limitaciones de dominio**: en áreas muy especializadas (medicina, derecho), el juez puede no detectar errores factuales.
-
-**Mitigación**: usar múltiples pasadas con posiciones intercambiadas, cadena de razonamiento (CoT) antes de la puntuación, y calibración con anotaciones humanas.
-""",
-        },
-    ]
-
-    for q in questions:
-        with st.expander(f"**Pregunta {q['num']}** · {q['q']} · *{q['pts']} pts*", expanded=False):
-            st.markdown(f'<div class="answer-box">{q["a"]}</div>', unsafe_allow_html=True)
-
-    st.success("✅ Todas las respuestas del quiz están disponibles. Expande cada pregunta para verlas.")
 
 
 # ══════════════════════════════════════════════
@@ -567,9 +462,14 @@ with tab2:
         col_g1.plotly_chart(fig_tokens, use_container_width=True)
         col_g2.plotly_chart(fig_ttr, use_container_width=True)
 
-        # Campo de observaciones
+        # ── Campo de observaciones guardables ──
         st.markdown("**📝 Documentación de Observaciones**")
-        obs = st.text_area(
+
+        # Inicializar historial de observaciones guardadas
+        if "saved_observations" not in st.session_state:
+            st.session_state["saved_observations"] = []
+
+        obs_input = st.text_area(
             "Anota tus observaciones sobre el efecto de los parámetros:",
             placeholder=(
                 "Ejemplo: Con temperatura alta (1.5) y top_p=0.9 la respuesta fue más creativa "
@@ -577,8 +477,37 @@ with tab2:
                 "El TTR más alto se observó en configuraciones con mayor temperatura..."
             ),
             height=120,
-            key="observations",
+            key="obs_input_field",
         )
+
+        col_obs1, col_obs2 = st.columns([1, 4])
+        with col_obs1:
+            if st.button("💾 Guardar observación"):
+                if obs_input.strip():
+                    import datetime
+                    st.session_state["saved_observations"].append({
+                        "timestamp": datetime.datetime.now().strftime("%H:%M:%S"),
+                        "text": obs_input.strip(),
+                    })
+                    st.success("✅ Observación guardada.")
+                else:
+                    st.warning("Escribe algo antes de guardar.")
+        with col_obs2:
+            if st.button("🗑️ Limpiar todas las observaciones") and st.session_state["saved_observations"]:
+                st.session_state["saved_observations"] = []
+                st.rerun()
+
+        # Mostrar observaciones guardadas
+        if st.session_state["saved_observations"]:
+            st.markdown("**📋 Observaciones guardadas:**")
+            for i, entry in enumerate(st.session_state["saved_observations"], 1):
+                st.markdown(
+                    f'<div class="answer-box">'
+                    f'<span style="color:#00FFB3;font-size:0.75rem;">#{i} · {entry["timestamp"]}</span><br>'
+                    f'{entry["text"]}'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
 
 # ══════════════════════════════════════════════
@@ -755,13 +684,39 @@ with tab4:
 
     st.markdown('<div class="main-title">PARTE 04 · Agente Conversacional con Métricas de Producción (15 pts)</div>', unsafe_allow_html=True)
 
-    # ── Configuración del agente ──
-    AGENT_SYSTEM_PROMPT = """Eres TutorML, un tutor experto en Machine Learning y Deep Learning.
+    # ── Personalidades predefinidas ──
+    PRESET_PERSONALITIES = {
+        "🎓 TutorML (Machine Learning)": (
+            "TutorML",
+            """Eres TutorML, un tutor experto en Machine Learning y Deep Learning.
 Tu personalidad es amigable, precisa y pedagógica. Explicas conceptos complejos con analogías claras.
 Dominio: ML, DL, NLP, LLMs, matemáticas para IA, frameworks (PyTorch, TensorFlow, scikit-learn).
-Restricciones: No respondes preguntas fuera de tu dominio de ML/IA. Si te preguntan algo fuera de tu
-área, lo indicas con amabilidad y redirigen la conversación.
-Siempre estructura tus respuestas con claridad. Usa ejemplos concretos cuando sea posible."""
+Restricciones: No respondes preguntas fuera de tu dominio de ML/IA. Si te preguntan algo fuera de tu área, lo indicas con amabilidad y rediriges la conversación.
+Siempre estructura tus respuestas con claridad. Usa ejemplos concretos cuando sea posible.""",
+        ),
+        "⚖️ Asistente Jurídico": (
+            "LexBot",
+            """Eres LexBot, un asistente jurídico experto en derecho colombiano e internacional.
+Tu personalidad es formal, precisa y cautelosa. Siempre aclaras que tus respuestas son orientativas y no reemplazan asesoría legal profesional.
+Dominio: derecho civil, penal, laboral, comercial, constitucional colombiano.
+Restricciones: No emites conceptos definitivos sobre casos reales. Siempre recomiendas consultar un abogado.""",
+        ),
+        "⚽ Experto en Deportes": (
+            "SportsPro",
+            """Eres SportsPro, un analista deportivo apasionado y conocedor de múltiples disciplinas.
+Tu personalidad es entusiasta, dinámica y accesible. Usas analogías deportivas para explicar conceptos.
+Dominio: fútbol, baloncesto, tenis, atletismo, ciclismo, estadísticas deportivas, historia del deporte.
+Restricciones: No haces predicciones de apuestas ni pronósticos de resultados futuros.""",
+        ),
+        "🍳 Chef Culinario": (
+            "ChefBot",
+            """Eres ChefBot, un chef profesional con formación en cocina francesa, italiana y latinoamericana.
+Tu personalidad es cálida, creativa y detallista. Amas compartir trucos de cocina y el origen cultural de cada plato.
+Dominio: recetas, técnicas culinarias, maridaje, nutrición básica, historia gastronómica.
+Restricciones: No recomendas dietas médicas ni tratamientos nutricionales especializados.""",
+        ),
+        "✏️ Personalidad personalizada": ("Mi Agente", ""),
+    }
 
     # ── Sidebar del agente ──
     with st.sidebar:
@@ -775,6 +730,41 @@ Siempre estructura tus respuestas con claridad. Usa ejemplos concretos cuando se
             st.session_state["agent_metrics_history"] = []
             st.rerun()
 
+    # ── Selector de personalidad ──
+    st.subheader("🎭 Personalidad del Agente")
+    preset_choice = st.selectbox(
+        "Elige una personalidad predefinida o crea la tuya:",
+        list(PRESET_PERSONALITIES.keys()),
+        key="preset_choice",
+    )
+    default_name, default_prompt = PRESET_PERSONALITIES[preset_choice]
+
+    col_name, col_reset = st.columns([3, 1])
+    with col_name:
+        agent_name = st.text_input(
+            "Nombre del agente",
+            value=default_name,
+            key="agent_name_input",
+        )
+    with col_reset:
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    agent_system_prompt = st.text_area(
+        "System prompt (define personalidad, dominio y restricciones)",
+        value=default_prompt,
+        height=160,
+        key="agent_system_prompt",
+        help="Este prompt define quién es el agente. Edítalo libremente.",
+    )
+
+    if st.button("✅ Aplicar nueva personalidad y reiniciar conversación"):
+        st.session_state["agent_messages"] = []
+        st.session_state["agent_metrics_history"] = []
+        st.success(f"✅ Agente **{agent_name}** listo. Conversación reiniciada.")
+        st.rerun()
+
+    st.markdown("---")
+
     # ── Inicializar estado ──
     if "agent_messages" not in st.session_state:
         st.session_state["agent_messages"] = []
@@ -782,15 +772,17 @@ Siempre estructura tus respuestas con claridad. Usa ejemplos concretos cuando se
         st.session_state["agent_metrics_history"] = []
 
     # ── Renderizar historial ──
-    st.markdown("**🤖 TutorML · Tutor de Machine Learning**")
-    st.caption("Especialista en ML, DL, NLP y LLMs. Pregúntame lo que quieras sobre IA.")
+    current_name = st.session_state.get("agent_name_input", "Agente")
+    current_prompt = st.session_state.get("agent_system_prompt", "")
+    st.markdown(f"**🤖 {current_name}**")
+    st.caption(f"System prompt activo: _{current_prompt[:120]}..._" if len(current_prompt) > 120 else f"System prompt activo: _{current_prompt}_")
 
     for msg in st.session_state["agent_messages"]:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
     # ── Input del usuario ──
-    user_input = st.chat_input("Escribe tu pregunta sobre ML/IA...")
+    user_input = st.chat_input(f"Escribe tu mensaje para {current_name}...")
 
     if user_input:
         # Agregar mensaje del usuario
@@ -798,12 +790,12 @@ Siempre estructura tus respuestas con claridad. Usa ejemplos concretos cuando se
         with st.chat_message("user"):
             st.markdown(user_input)
 
-        # Preparar mensajes con system prompt
-        full_messages = [{"role": "system", "content": AGENT_SYSTEM_PROMPT}] + \
+        # Preparar mensajes con system prompt dinámico
+        full_messages = [{"role": "system", "content": current_prompt}] + \
                          st.session_state["agent_messages"]
 
         with st.chat_message("assistant"):
-            with st.spinner("TutorML está pensando..."):
+            with st.spinner(f"{current_name} está pensando..."):
                 t0 = time.time()
                 response_text, usage = call_llm(
                     full_messages,
@@ -827,8 +819,8 @@ Siempre estructura tus respuestas con claridad. Usa ejemplos concretos cuando se
                 # LLM-Judge automático de la última respuesta
                 judge_score = None
                 if len(st.session_state["agent_messages"]) >= 2:
-                    judge_prompt = f"""Evalúa esta respuesta de un tutor de ML del 1 al 10.
-Criterios: precisión técnica, claridad, utilidad pedagógica.
+                    judge_prompt = f"""Evalúa esta respuesta de un agente conversacional del 1 al 10.
+Criterios: precisión, claridad y utilidad para el usuario.
 Responde SOLO un JSON: {{"score": <1-10>, "razon": "<breve>"}}
 
 PREGUNTA: {user_input}
